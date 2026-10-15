@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS jobs (
+    id VARCHAR(36) PRIMARY KEY,
+    job_type VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    progress INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
+    result_links JSON NOT NULL DEFAULT '[]',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+    id BIGSERIAL PRIMARY KEY,
+    key VARCHAR(255) NOT NULL UNIQUE,
+    request_hash CHAR(64) NOT NULL,
+    job_id VARCHAR(36) NOT NULL REFERENCES jobs(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
