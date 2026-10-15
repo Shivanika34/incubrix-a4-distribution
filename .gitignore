@@ -1,0 +1,5 @@
+docs/brief.pdf
+.env
+.venv/
+__pycache__/
+.pytest_cache/
