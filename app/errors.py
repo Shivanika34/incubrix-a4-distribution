@@ -11,6 +11,7 @@ ERROR_CODES: dict[str, bool] = {
     "IDEMPOTENCY_KEY_REUSED": False,
     "JOB_NOT_FOUND": False,
     "REQUEST_VALIDATION_ERROR": False,
+    "HTTP_ERROR": False,
 }
 
 

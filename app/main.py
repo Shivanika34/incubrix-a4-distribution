@@ -8,8 +8,10 @@ from fastapi import FastAPI, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.adapters import ReadinessAdapter, ServiceReadiness
+from app.callbacks import CallbackAdapter, HttpCallbackAdapter
 from app.config import Settings
 from app.database import make_database
 from app.errors import AppError
@@ -29,10 +31,12 @@ def app_error_response(error: AppError) -> JSONResponse:
 def create_app(
     settings: Settings | None = None,
     readiness_adapter: ReadinessAdapter | None = None,
+    callback_adapter: CallbackAdapter | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_env()
     configure_logging(config.log_level)
     engine, session_factory = make_database(config.database_url)
+    callbacks = callback_adapter or HttpCallbackAdapter(config.callback_hmac_secret)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -66,6 +70,10 @@ def create_app(
     async def validation_error_handler(_request: Request, error: RequestValidationError):
         return JSONResponse(status_code=422, content={"error": {"code": "REQUEST_VALIDATION_ERROR", "message": "The request body is invalid.", "retryable": False, "details": jsonable_encoder(error.errors())}})
 
+    @application.exception_handler(StarletteHTTPException)
+    async def http_error_handler(_request: Request, error: StarletteHTTPException):
+        return JSONResponse(status_code=error.status_code, content={"error": {"code": "HTTP_ERROR", "message": str(error.detail), "retryable": error.status_code >= 500, "details": None}})
+
     @application.exception_handler(Exception)
     async def unexpected_error_handler(_request: Request, _error: Exception):
         logger.exception("unhandled application error")
@@ -83,6 +91,10 @@ def create_app(
         except Exception:
             response.status_code = 503
             return {"status": "not_ready"}
+
+    from app.jobs_api import add_job_routes
+
+    add_job_routes(application, callbacks, config.echo_sleep_seconds)
 
     return application
 

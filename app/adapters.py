@@ -27,6 +27,7 @@ class ServiceReadiness:
             secret_key=self.settings.minio_secret_key or None,
             secure=self.settings.minio_endpoint.startswith("https://"),
         )
-        client.bucket_exists(self.settings.minio_bucket)
+        if not client.bucket_exists(self.settings.minio_bucket):
+            client.make_bucket(self.settings.minio_bucket)
 
 

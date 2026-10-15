@@ -11,6 +11,13 @@ def test_error_response_uses_shared_shape(client):
     assert error["retryable"] is False
 
 
+def test_unknown_route_uses_shared_error_shape(client):
+    response = client.get("/missing-route")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "HTTP_ERROR"
+    assert set(response.json()["error"]) == {"code", "message", "retryable", "details"}
+
+
 def test_request_correlation_id_is_returned_and_logged(client, caplog):
     response = client.get("/health", headers={"X-Correlation-Id": "trace-test-42"})
     assert response.headers["X-Correlation-Id"] == "trace-test-42"
