@@ -1,0 +1,1 @@
+An AI coding assistant (OpenAI Codex) is used to help implement and document this assessment, including project setup, application code, and tests. The candidate reviews and must be able to explain all submitted work.
