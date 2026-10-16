@@ -14,6 +14,9 @@ services:
       APP_CONFIG_FILE: ${APP_CONFIG_FILE:-}
       CALLBACK_HMAC_SECRET: ${CALLBACK_HMAC_SECRET:-replace-for-local-use}
       ECHO_SLEEP_SECONDS: ${ECHO_SLEEP_SECONDS:-3}
+      CONNECTORS_DIR: ${CONNECTORS_DIR:-connectors}
+      CONNECTOR_DISABLED: ${CONNECTOR_DISABLED:-}
+      MOCK_PLATFORM_URL: ${MOCK_PLATFORM_URL:-http://mock-platform:8080}
     ports:
       - "8000:8000"
     depends_on:
@@ -58,6 +61,17 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"]
       interval: 10s
       timeout: 5s
+      retries: 5
+
+  mock-platform:
+    build: .
+    command: ["uvicorn", "app.mock_platform:app", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 3s
       retries: 5
 
 volumes:

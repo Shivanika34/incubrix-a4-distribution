@@ -1,0 +1,17 @@
+[
+  {"name":"plain allowed","rendition":{"body":"hello"},"destination":{},"history":[],"outcome":"allowed"},
+  {"name":"cap empty history","rendition":{},"destination":{"frequency_cap":{"max_posts":1,"window_seconds":3600}},"history":[],"outcome":"allowed"},
+  {"name":"cap reschedules","rendition":{},"destination":{"frequency_cap":{"max_posts":1,"window_seconds":3600}},"history":["2026-01-01T11:30:00+00:00"],"outcome":"reschedule","code":"DEST_RULE_FREQUENCY_CAP"},
+  {"name":"cap ignores old post","rendition":{},"destination":{"frequency_cap":{"max_posts":1,"window_seconds":3600}},"history":["2026-01-01T09:00:00+00:00"],"outcome":"allowed"},
+  {"name":"two post cap","rendition":{},"destination":{"frequency_cap":{"max_posts":2,"window_seconds":3600}},"history":["2026-01-01T11:10:00+00:00","2026-01-01T11:20:00+00:00"],"outcome":"reschedule"},
+  {"name":"promo blocked","rendition":{"is_promotional":true},"destination":{"self_promo_allowed":false},"history":[],"outcome":"blocked"},
+  {"name":"promo allowed","rendition":{"is_promotional":true},"destination":{"self_promo_allowed":true},"history":[],"outcome":"allowed"},
+  {"name":"link blocked","rendition":{"body":"visit https://example.test"},"destination":{"link_policy":"block"},"history":[],"outcome":"blocked"},
+  {"name":"link stripped","rendition":{"body":"visit https://example.test"},"destination":{"link_policy":"strip"},"history":[],"outcome":"allowed","body":"visit"},
+  {"name":"link allowed","rendition":{"body":"visit https://example.test"},"destination":{"link_policy":"allow"},"history":[],"outcome":"allowed"},
+  {"name":"ai disclosure blocked","rendition":{"body":"draft","ai_generated":true},"destination":{"disclosure_required":true},"history":[],"outcome":"blocked"},
+  {"name":"ai disclosure appended","rendition":{"body":"draft","ai_generated":true},"destination":{"disclosure_required":true,"disclosure_mode":"append"},"history":[],"outcome":"allowed","body":"draft\n\nAI-generated."},
+  {"name":"ai disclosure exists","rendition":{"body":"draft\nAI-generated","ai_generated":true},"destination":{"disclosure_required":true},"history":[],"outcome":"allowed"},
+  {"name":"human disclosure irrelevant","rendition":{"body":"draft"},"destination":{"disclosure_required":true},"history":[],"outcome":"allowed"},
+  {"name":"assisted only","rendition":{},"destination":{"automation_allowed":false},"history":[],"outcome":"blocked"}
+]

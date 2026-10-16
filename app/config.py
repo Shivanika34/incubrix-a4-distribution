@@ -18,6 +18,9 @@ class Settings:
     app_config_file: str
     callback_hmac_secret: str
     echo_sleep_seconds: float
+    connectors_dir: str
+    connector_disabled: frozenset[str]
+    mock_platform_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -34,4 +37,7 @@ class Settings:
             app_config_file=os.getenv("APP_CONFIG_FILE", ""),
             callback_hmac_secret=os.getenv("CALLBACK_HMAC_SECRET", ""),
             echo_sleep_seconds=float(os.getenv("ECHO_SLEEP_SECONDS", "3")),
+            connectors_dir=os.getenv("CONNECTORS_DIR", "connectors"),
+            connector_disabled=frozenset(key.strip() for key in os.getenv("CONNECTOR_DISABLED", "").split(",") if key.strip()),
+            mock_platform_url=os.getenv("MOCK_PLATFORM_URL", "http://localhost:8080"),
         )

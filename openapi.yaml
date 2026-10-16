@@ -131,10 +131,593 @@
           }
         }
       }
+    },
+    "/api/v1/destinations": {
+      "get": {
+        "tags": [
+          "destinations"
+        ],
+        "summary": "List Destinations",
+        "operationId": "list_destinations_api_v1_destinations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DestinationResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Destinations Api V1 Destinations Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "destinations"
+        ],
+        "summary": "Create Destination",
+        "operationId": "create_destination_api_v1_destinations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DestinationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DestinationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/destinations/{destination_id}": {
+      "get": {
+        "tags": [
+          "destinations"
+        ],
+        "summary": "Get Destination",
+        "operationId": "get_destination_api_v1_destinations__destination_id__get",
+        "parameters": [
+          {
+            "name": "destination_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Destination Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DestinationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connector/v1/{connector_key}/{method}": {
+      "post": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Dispatch",
+        "operationId": "dispatch_connector_v1__connector_key___method__post",
+        "parameters": [
+          {
+            "name": "connector_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Connector Key"
+            }
+          },
+          {
+            "name": "method",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Method"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ConnectorRequest": {
+        "properties": {
+          "rendition": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rendition"
+          },
+          "destination": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Destination"
+          },
+          "connection": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Connection"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "platform_post_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform Post Id"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "post_history": {
+            "items": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Post History"
+          }
+        },
+        "type": "object",
+        "title": "ConnectorRequest"
+      },
+      "DestinationInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url"
+          },
+          "platform_key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Platform Key"
+          },
+          "surface": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Surface"
+          },
+          "connector_key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Connector Key"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "audience_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Audience Tags"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "geo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geo"
+          },
+          "est_audience": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Est Audience"
+          },
+          "rules_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rules Url"
+          },
+          "frequency_cap": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Frequency Cap"
+          },
+          "self_promo_allowed": {
+            "type": "boolean",
+            "title": "Self Promo Allowed",
+            "default": true
+          },
+          "link_policy": {
+            "type": "string",
+            "pattern": "^(allow|block|strip)$",
+            "title": "Link Policy",
+            "default": "allow"
+          },
+          "disclosure_required": {
+            "type": "boolean",
+            "title": "Disclosure Required",
+            "default": false
+          },
+          "automation_allowed": {
+            "type": "boolean",
+            "title": "Automation Allowed",
+            "default": true
+          },
+          "relevance_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relevance Score"
+          },
+          "relevance_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relevance Reason"
+          },
+          "level": {
+            "type": "string",
+            "pattern": "^L[0-4]$",
+            "title": "Level",
+            "default": "L0"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "platform_key",
+          "surface",
+          "connector_key"
+        ],
+        "title": "DestinationInput"
+      },
+      "DestinationResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url"
+          },
+          "platform_key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Platform Key"
+          },
+          "surface": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Surface"
+          },
+          "connector_key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Connector Key"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "audience_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Audience Tags"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "geo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geo"
+          },
+          "est_audience": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Est Audience"
+          },
+          "rules_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rules Url"
+          },
+          "frequency_cap": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Frequency Cap"
+          },
+          "self_promo_allowed": {
+            "type": "boolean",
+            "title": "Self Promo Allowed",
+            "default": true
+          },
+          "link_policy": {
+            "type": "string",
+            "pattern": "^(allow|block|strip)$",
+            "title": "Link Policy",
+            "default": "allow"
+          },
+          "disclosure_required": {
+            "type": "boolean",
+            "title": "Disclosure Required",
+            "default": false
+          },
+          "automation_allowed": {
+            "type": "boolean",
+            "title": "Automation Allowed",
+            "default": true
+          },
+          "relevance_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relevance Score"
+          },
+          "relevance_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relevance Reason"
+          },
+          "level": {
+            "type": "string",
+            "pattern": "^L[0-4]$",
+            "title": "Level",
+            "default": "L0"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "last_certified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Certified At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "platform_key",
+          "surface",
+          "connector_key",
+          "id"
+        ],
+        "title": "DestinationResponse"
+      },
       "EchoRequest": {
         "properties": {
           "text": {

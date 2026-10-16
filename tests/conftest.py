@@ -39,6 +39,9 @@ def settings():
         app_config_file="",
         callback_hmac_secret="test-callback-signing-key",
         echo_sleep_seconds=0.02,
+        connectors_dir="connectors",
+        connector_disabled=frozenset(),
+        mock_platform_url="http://mock-platform:8080",
     )
 
 

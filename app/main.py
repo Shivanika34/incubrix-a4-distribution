@@ -14,6 +14,7 @@ from app.adapters import ReadinessAdapter, ServiceReadiness
 from app.callbacks import CallbackAdapter, HttpCallbackAdapter
 from app.config import Settings
 from app.database import make_database
+from app.connectors.registry import ConnectorRegistry
 from app.errors import AppError
 from app.logging_config import configure_logging, correlation_id_var
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def app_error_response(error: AppError) -> JSONResponse:
-    status_code = 404 if error.code == "JOB_NOT_FOUND" else 409 if error.code == "IDEMPOTENCY_KEY_REUSED" else 400 if error.code == "IDEMPOTENCY_KEY_REQUIRED" else 503
+    status_code = 404 if error.code in {"JOB_NOT_FOUND", "DESTINATION_NOT_FOUND", "CONNECTOR_NOT_FOUND"} else 409 if error.code == "IDEMPOTENCY_KEY_REUSED" else 422 if error.code == "DEST_SPEC_VIOLATION" else 403 if error.code == "CONNECTOR_DISABLED" else 400 if error.code in {"IDEMPOTENCY_KEY_REQUIRED", "CONNECTOR_METHOD_NOT_FOUND"} else 503
     return JSONResponse(
         status_code=status_code,
         content={"error": {"code": error.code, "message": error.message, "retryable": error.retryable, "details": error.details}},
@@ -48,6 +49,8 @@ def create_app(
     application = FastAPI(title="IncuBrix Long-Tail Distribution", version="0.1.0", lifespan=lifespan)
     application.state.session_factory = session_factory
     application.state.readiness = readiness_adapter or ServiceReadiness(session_factory, config)
+    application.state.connector_registry = ConnectorRegistry(config.connectors_dir)
+    application.state.disabled_connectors = config.connector_disabled
 
     @application.middleware("http")
     async def add_correlation_id(request: Request, call_next):
@@ -93,8 +96,12 @@ def create_app(
             return {"status": "not_ready"}
 
     from app.jobs_api import add_job_routes
+    from app.destinations_api import add_destination_routes
+    from app.connectors_api import add_connector_routes
 
     add_job_routes(application, callbacks, config.echo_sleep_seconds)
+    add_destination_routes(application)
+    add_connector_routes(application)
 
     return application
 
