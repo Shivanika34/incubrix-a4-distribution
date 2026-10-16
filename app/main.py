@@ -49,7 +49,7 @@ def create_app(
     application = FastAPI(title="IncuBrix Long-Tail Distribution", version="0.1.0", lifespan=lifespan)
     application.state.session_factory = session_factory
     application.state.readiness = readiness_adapter or ServiceReadiness(session_factory, config)
-    application.state.connector_registry = ConnectorRegistry(config.connectors_dir)
+    application.state.connector_registry = ConnectorRegistry(config.connectors_dir, config)
     application.state.disabled_connectors = config.connector_disabled
 
     @application.middleware("http")

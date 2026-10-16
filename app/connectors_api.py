@@ -28,6 +28,10 @@ def add_connector_routes(application) -> None:
         connector = request.app.state.connector_registry.get(connector_key)
         if connector is None:
             raise AppError("CONNECTOR_NOT_FOUND", f"Connector '{connector_key}' is not registered.", False)
+        capabilities = request.app.state.connector_registry.manifests[connector_key]["capabilities"]
+        method_capability = {"publish": "publish", "get_status": "status", "delete": "delete", "fetch_metrics": "metrics", "build_assist_pack": "assist"}
+        if method in method_capability and method_capability[method] not in capabilities:
+            raise AppError("CONNECTOR_METHOD_NOT_FOUND", f"Connector method '{method}' is not available.", False)
         if not hasattr(connector, method) or method.startswith("_"):
             raise AppError("CONNECTOR_METHOD_NOT_FOUND", f"Connector method '{method}' is not available.", False)
 

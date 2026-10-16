@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import os
+import json
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class Settings:
     connectors_dir: str
     connector_disabled: frozenset[str]
     mock_platform_url: str
+    webhook_secrets: dict[str, str]
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -40,4 +42,5 @@ class Settings:
             connectors_dir=os.getenv("CONNECTORS_DIR", "connectors"),
             connector_disabled=frozenset(key.strip() for key in os.getenv("CONNECTOR_DISABLED", "").split(",") if key.strip()),
             mock_platform_url=os.getenv("MOCK_PLATFORM_URL", "http://localhost:8080"),
+            webhook_secrets=json.loads(os.getenv("WEBHOOK_SECRETS_JSON", "{}")),
         )

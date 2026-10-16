@@ -42,6 +42,7 @@ def settings():
         connectors_dir="connectors",
         connector_disabled=frozenset(),
         mock_platform_url="http://mock-platform:8080",
+        webhook_secrets={},
     )
 
 

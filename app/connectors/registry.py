@@ -6,6 +6,10 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from app.connectors.noop import NoopConnector
+from app.connectors.assisted import AssistedConnector
+from app.connectors.devto import DevtoConnector
+from app.connectors.http import HttpxPlatformHttpAdapter
+from app.connectors.webhook import WebhookConnector
 
 MANIFEST_SCHEMA = {
     "type": "object", "additionalProperties": False,
@@ -32,7 +36,7 @@ def map_platform_error(status_code: int, error_map: dict[str, str]) -> str:
 
 
 class ConnectorRegistry:
-    def __init__(self, directory: str):
+    def __init__(self, directory: str, settings=None):
         self.manifests: dict[str, dict[str, Any]] = {}
         self.connectors: dict[str, Any] = {}
         for path in sorted(Path(directory).glob("*/manifest.yaml")):
@@ -42,8 +46,21 @@ class ConnectorRegistry:
             if key in self.manifests:
                 raise ValueError(f"Duplicate connector key: {key}")
             self.manifests[key] = manifest
-            if key == "noop":
-                self.connectors[key] = NoopConnector(manifest)
+            self.connectors[key] = self._build_connector(manifest, settings)
+
+    @staticmethod
+    def _build_connector(manifest: dict[str, Any], settings):
+        key = manifest["key"]
+        if key == "noop":
+            return NoopConnector(manifest)
+        if key == "assisted":
+            return AssistedConnector(manifest)
+        adapter = HttpxPlatformHttpAdapter()
+        if key == "webhook":
+            return WebhookConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url, secrets=settings.webhook_secrets)
+        if key == "devto":
+            return DevtoConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
+        raise ValueError(f"No implementation exists for connector '{key}'.")
 
     def get(self, key: str):
         return self.connectors.get(key)
