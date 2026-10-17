@@ -1,5 +1,9 @@
 docs/brief.pdf
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 .pytest_cache/
+.pytest-tmp/
+*.py[cod]

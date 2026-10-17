@@ -1,0 +1,112 @@
+services:
+  api:
+    build: .
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://incubrix:local-dev-only@postgres:5432/incubrix}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://storage:9090}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-incubrix-local}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-local-minio-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-incubrix-artifacts}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SIMULATION_MODE: ${SIMULATION_MODE:-true}
+      DEFAULT_RATE_LIMIT_REQUESTS: ${DEFAULT_RATE_LIMIT_REQUESTS:-60}
+      DEFAULT_RATE_LIMIT_WINDOW_SECONDS: ${DEFAULT_RATE_LIMIT_WINDOW_SECONDS:-60}
+      APP_CONFIG_FILE: ${APP_CONFIG_FILE:-}
+      CALLBACK_HMAC_SECRET: ${CALLBACK_HMAC_SECRET:-replace-for-local-use}
+      ECHO_SLEEP_SECONDS: ${ECHO_SLEEP_SECONDS:-3}
+      CONNECTORS_DIR: ${CONNECTORS_DIR:-connectors}
+      CONNECTOR_DISABLED: ${CONNECTOR_DISABLED:-}
+      MOCK_PLATFORM_URL: ${MOCK_PLATFORM_URL:-http://mock-platform:8080}
+      WEBHOOK_SECRETS_JSON: ${WEBHOOK_SECRETS_JSON:-{}}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts:/service/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-incubrix}
+      POSTGRES_USER: ${POSTGRES_USER:-incubrix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-incubrix} -d ${POSTGRES_DB:-incubrix}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  storage:
+    image: adobe/s3mock:5.2.3
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: ${MINIO_BUCKET:-incubrix-artifacts}
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+    ports:
+      - "9090:9090"
+    volumes:
+      - s3mock_data:/s3mockroot
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mock-platform:
+    build: .
+    command: ["uvicorn", "app.mock_platform:app", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  lemmy-test:
+    build: .
+    environment:
+      PLATFORM_KIND: lemmy
+    command: ["uvicorn", "app.mock_platform:app", "--host", "0.0.0.0", "--port", "8080"]
+    expose:
+      - "8080"
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  ghost-test:
+    build: .
+    environment:
+      PLATFORM_KIND: ghost
+    command: ["uvicorn", "app.mock_platform:app", "--host", "0.0.0.0", "--port", "8080"]
+    expose:
+      - "8080"
+    ports:
+      - "8082:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
+  s3mock_data:

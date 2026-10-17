@@ -1,0 +1,19 @@
+{
+  "certification_run_id": "f417e806-8b89-47b2-b265-a5c927abe543",
+  "completed_at": "2026-10-17T07:26:27.741619+00:00",
+  "connector": "noop",
+  "delete_result": {
+    "deleted": true
+  },
+  "destination_id": "6309cbda-9699-484c-8556-4c78e64508b6",
+  "error_code": null,
+  "live_url": "https://destination.example.test/submit/posts/certification-1:6309cbda-9699-484c-8556-4c78e64508b6",
+  "platform_post_id": "certification-1:6309cbda-9699-484c-8556-4c78e64508b6",
+  "reason": "Test post published, confirmed live, and deleted.",
+  "started_at": "2026-10-17T07:26:27.735501+00:00",
+  "status": "certified",
+  "status_result": {
+    "live_url": "https://noop.local/posts/certification-1:6309cbda-9699-484c-8556-4c78e64508b6",
+    "status": "live"
+  }
+}

@@ -1,0 +1,22 @@
+key: devto
+version: 1.0.0
+tier: native
+auth: api_key
+surfaces:
+  - key: article
+    content_types: [text, image]
+    spec:
+      title_max_chars: 128
+      body_max_chars: 100000
+      links_allowed: true
+rate_limits:
+  per_connection:
+    requests: 30
+    per_seconds: 60
+capabilities: [publish, status, delete]
+error_map:
+  "401": CONNECTION_AUTH_EXPIRED
+  "422": PLATFORM_CONTENT_REJECTED
+  "429": PLATFORM_RATE_LIMIT
+  "500": PLATFORM_UNAVAILABLE
+instance_param: base_url

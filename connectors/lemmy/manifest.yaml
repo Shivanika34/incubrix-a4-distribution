@@ -1,0 +1,23 @@
+key: lemmy
+version: 1.0.0
+tier: native
+auth: bot_token
+surfaces:
+  - key: community_post
+    content_types: [text, image, video_link]
+    spec:
+      title_max_chars: 200
+      body_max_chars: 20000
+      links_allowed: true
+rate_limits:
+  per_connection:
+    requests: 60
+    per_seconds: 60
+capabilities: [publish, status, delete]
+error_map:
+  "401": CONNECTION_AUTH_EXPIRED
+  "403": CONNECTION_AUTH_EXPIRED
+  "400": PLATFORM_CONTENT_REJECTED
+  "429": PLATFORM_RATE_LIMIT
+  "500": PLATFORM_UNAVAILABLE
+instance_param: base_url

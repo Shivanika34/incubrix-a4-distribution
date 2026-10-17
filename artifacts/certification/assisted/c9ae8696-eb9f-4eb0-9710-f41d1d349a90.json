@@ -1,0 +1,25 @@
+{
+  "certification_run_id": "c9ae8696-eb9f-4eb0-9710-f41d1d349a90",
+  "completed_at": "2026-10-17T07:27:02.093262+00:00",
+  "connector": "assisted",
+  "delete_result": {},
+  "destination_id": "27f7d60d-40c6-4d68-bf3f-c56230720248",
+  "error_code": null,
+  "live_url": null,
+  "platform_post_id": null,
+  "posting_pack": {
+    "caption": "IncuBrix certification test c9ae8696\n\nTemporary certification post. This post is created and deleted by the local certification harness.",
+    "checklist": [
+      "Review media rights",
+      "Review text and links",
+      "Confirm destination rules",
+      "Open submit link and post manually"
+    ],
+    "deep_link": "https://destination.example.test/submit",
+    "files": []
+  },
+  "reason": "Posting pack generated; manual publication is required.",
+  "started_at": "2026-10-17T07:27:02.088311+00:00",
+  "status": "assisted",
+  "status_result": {}
+}

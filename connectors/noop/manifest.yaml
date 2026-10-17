@@ -1,0 +1,22 @@
+key: noop
+version: 1.0.0
+tier: native
+auth: none
+surfaces:
+  - key: post
+    content_types: [text]
+    spec:
+      title_max_chars: 120
+      body_max_chars: 10000
+      links_allowed: true
+rate_limits:
+  per_connection:
+    requests: 60
+    per_seconds: 60
+capabilities: [publish, status, delete]
+error_map:
+  "401": CONNECTION_AUTH_EXPIRED
+  "422": PLATFORM_CONTENT_REJECTED
+  "429": PLATFORM_RATE_LIMIT
+  "500": PLATFORM_UNAVAILABLE
+instance_param: base_url
