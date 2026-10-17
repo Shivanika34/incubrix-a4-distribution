@@ -1,0 +1,20 @@
+{
+  "certification_run_id": "6b8e2d37-d20d-405d-b149-43d9470d2a72",
+  "completed_at": "2026-10-17T07:28:13.792081+00:00",
+  "connector": "lemmy",
+  "delete_result": {
+    "deleted": true,
+    "platform_post_id": "lemmy-da6e11528c76"
+  },
+  "destination_id": "e9bac9df-00cc-4497-8680-a1eb48488ea8",
+  "error_code": null,
+  "live_url": "http://lemmy.local.test/lemmy-da6e11528c76",
+  "platform_post_id": "lemmy-da6e11528c76",
+  "reason": "Test post published, confirmed live, and deleted.",
+  "started_at": "2026-10-17T07:28:13.741834+00:00",
+  "status": "certified",
+  "status_result": {
+    "live_url": "http://lemmy.local.test/lemmy-da6e11528c76",
+    "status": "live"
+  }
+}

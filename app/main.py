@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def app_error_response(error: AppError) -> JSONResponse:
-    status_code = 404 if error.code in {"JOB_NOT_FOUND", "DESTINATION_NOT_FOUND", "CONNECTOR_NOT_FOUND"} else 409 if error.code == "IDEMPOTENCY_KEY_REUSED" else 422 if error.code == "DEST_SPEC_VIOLATION" else 403 if error.code == "CONNECTOR_DISABLED" else 400 if error.code in {"IDEMPOTENCY_KEY_REQUIRED", "CONNECTOR_METHOD_NOT_FOUND"} else 503
+    status_code = 404 if error.code in {"JOB_NOT_FOUND", "DESTINATION_NOT_FOUND", "CONNECTOR_NOT_FOUND"} else 409 if error.code == "IDEMPOTENCY_KEY_REUSED" else 422 if error.code in {"DEST_SPEC_VIOLATION", "CERTIFICATION_FAILED"} else 403 if error.code == "CONNECTOR_DISABLED" else 400 if error.code in {"IDEMPOTENCY_KEY_REQUIRED", "CONNECTOR_METHOD_NOT_FOUND"} else 503
     return JSONResponse(
         status_code=status_code,
         content={"error": {"code": error.code, "message": error.message, "retryable": error.retryable, "details": error.details}},
@@ -99,7 +99,7 @@ def create_app(
     from app.destinations_api import add_destination_routes
     from app.connectors_api import add_connector_routes
 
-    add_job_routes(application, callbacks, config.echo_sleep_seconds)
+    add_job_routes(application, callbacks, config.echo_sleep_seconds, application.state.connector_registry, application.state.disabled_connectors)
     add_destination_routes(application)
     add_connector_routes(application)
 

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     status VARCHAR(16) NOT NULL,
     progress INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
     result_links JSON NOT NULL DEFAULT '[]',
+    result JSON NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -23,7 +24,7 @@ CREATE TABLE IF NOT EXISTS destinations (
     platform_key VARCHAR(64) NOT NULL,
     surface VARCHAR(64) NOT NULL,
     category VARCHAR(128), audience_tags JSON NOT NULL DEFAULT '[]', language VARCHAR(32), geo VARCHAR(64),
-    est_audience INTEGER, rules_url VARCHAR(2048), frequency_cap JSON NOT NULL DEFAULT '{}',
+    est_audience INTEGER, rules_url VARCHAR(2048), submit_url VARCHAR(2048), frequency_cap JSON NOT NULL DEFAULT '{}',
     self_promo_allowed BOOLEAN NOT NULL DEFAULT TRUE, link_policy VARCHAR(32) NOT NULL DEFAULT 'allow',
     disclosure_required BOOLEAN NOT NULL DEFAULT FALSE, automation_allowed BOOLEAN NOT NULL DEFAULT TRUE,
     connector_key VARCHAR(64) NOT NULL, relevance_score INTEGER, relevance_reason TEXT,
@@ -33,4 +34,18 @@ CREATE TABLE IF NOT EXISTS destinations (
 CREATE TABLE IF NOT EXISTS rule_decisions (
     id BIGSERIAL PRIMARY KEY, destination_id VARCHAR(36), outcome VARCHAR(16) NOT NULL,
     reason TEXT NOT NULL, error_code VARCHAR(64), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS certification_runs (
+    id VARCHAR(36) PRIMARY KEY,
+    destination_id VARCHAR(36) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    platform_post_id VARCHAR(255),
+    live_url VARCHAR(2048),
+    status_result JSON NOT NULL DEFAULT '{}',
+    delete_result JSON NOT NULL DEFAULT '{}',
+    error_code VARCHAR(64),
+    reason TEXT,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
 );

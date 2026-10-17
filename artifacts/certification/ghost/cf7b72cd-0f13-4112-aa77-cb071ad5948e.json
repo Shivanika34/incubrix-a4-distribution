@@ -1,0 +1,20 @@
+{
+  "certification_run_id": "cf7b72cd-0f13-4112-aa77-cb071ad5948e",
+  "completed_at": "2026-10-17T07:28:14.001367+00:00",
+  "connector": "ghost",
+  "delete_result": {
+    "deleted": true,
+    "platform_post_id": "ghost-e8a4d221124f"
+  },
+  "destination_id": "2805d4cf-c397-4630-b1d6-a5c60230542c",
+  "error_code": null,
+  "live_url": "http://ghost.local.test/ghost-e8a4d221124f",
+  "platform_post_id": "ghost-e8a4d221124f",
+  "reason": "Test post published, confirmed live, and deleted.",
+  "started_at": "2026-10-17T07:28:13.966881+00:00",
+  "status": "certified",
+  "status_result": {
+    "live_url": "http://ghost.local.test/ghost-e8a4d221124f",
+    "status": "live"
+  }
+}

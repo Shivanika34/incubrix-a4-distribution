@@ -23,6 +23,7 @@ ERROR_CODES: dict[str, bool] = {
     "CONNECTOR_NOT_FOUND": False,
     "CONNECTOR_METHOD_NOT_FOUND": False,
     "DESTINATION_NOT_FOUND": False,
+    "CERTIFICATION_FAILED": False,
 }
 
 

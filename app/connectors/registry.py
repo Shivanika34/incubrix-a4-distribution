@@ -8,7 +8,10 @@ from jsonschema import Draft202012Validator
 from app.connectors.noop import NoopConnector
 from app.connectors.assisted import AssistedConnector
 from app.connectors.devto import DevtoConnector
+from app.connectors.discourse import DiscourseConnector
+from app.connectors.ghost import GhostConnector
 from app.connectors.http import HttpxPlatformHttpAdapter
+from app.connectors.lemmy import LemmyConnector
 from app.connectors.webhook import WebhookConnector
 
 MANIFEST_SCHEMA = {
@@ -60,6 +63,12 @@ class ConnectorRegistry:
             return WebhookConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url, secrets=settings.webhook_secrets)
         if key == "devto":
             return DevtoConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
+        if key == "discourse":
+            return DiscourseConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
+        if key == "lemmy":
+            return LemmyConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
+        if key == "ghost":
+            return GhostConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
         raise ValueError(f"No implementation exists for connector '{key}'.")
 
     def get(self, key: str):

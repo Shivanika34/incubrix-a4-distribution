@@ -132,6 +132,124 @@
         }
       }
     },
+    "/api/v1/publishing-jobs": {
+      "post": {
+        "tags": [
+          "publishing"
+        ],
+        "summary": "Create Publishing Job",
+        "operationId": "create_publishing_job_api_v1_publishing_jobs_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishingJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/certifications": {
+      "post": {
+        "tags": [
+          "certifications"
+        ],
+        "summary": "Create Certification",
+        "operationId": "create_certification_api_v1_certifications_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/destinations": {
       "get": {
         "tags": [
@@ -300,6 +418,37 @@
   },
   "components": {
     "schemas": {
+      "CertificationRequest": {
+        "properties": {
+          "destination_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Destination Id"
+          },
+          "content_item": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Item"
+          },
+          "connection": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Connection"
+          }
+        },
+        "type": "object",
+        "required": [
+          "destination_id"
+        ],
+        "title": "CertificationRequest"
+      },
       "ConnectorRequest": {
         "properties": {
           "rendition": {
@@ -468,6 +617,20 @@
             ],
             "title": "Rules Url"
           },
+          "submit_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submit Url"
+          },
           "frequency_cap": {
             "additionalProperties": true,
             "type": "object",
@@ -634,6 +797,20 @@
             ],
             "title": "Rules Url"
           },
+          "submit_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submit Url"
+          },
           "frequency_cap": {
             "additionalProperties": true,
             "type": "object",
@@ -782,6 +959,11 @@
             "type": "array",
             "title": "Result Links"
           },
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -799,10 +981,43 @@
           "status",
           "progress",
           "result_links",
+          "result",
           "created_at",
           "updated_at"
         ],
         "title": "JobResponse"
+      },
+      "PublishingJobRequest": {
+        "properties": {
+          "content_item": {
+            "additionalProperties": true,
+            "type": "object",
+            "minProperties": 1,
+            "title": "Content Item"
+          },
+          "destination_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Destination Ids"
+          },
+          "connections": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Connections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_item",
+          "destination_ids"
+        ],
+        "title": "PublishingJobRequest"
       },
       "ValidationError": {
         "properties": {

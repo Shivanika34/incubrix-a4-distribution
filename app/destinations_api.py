@@ -22,6 +22,7 @@ class DestinationInput(BaseModel):
     geo: str | None = None
     est_audience: int | None = Field(default=None, ge=0)
     rules_url: HttpUrl | None = None
+    submit_url: HttpUrl | None = None
     frequency_cap: dict = Field(default_factory=dict)
     self_promo_allowed: bool = True
     link_policy: str = Field(default="allow", pattern="^(allow|block|strip)$")

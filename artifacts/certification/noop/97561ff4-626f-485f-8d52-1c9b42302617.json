@@ -1,0 +1,14 @@
+{
+  "certification_run_id": "97561ff4-626f-485f-8d52-1c9b42302617",
+  "completed_at": "2026-10-17T07:53:14.199559+00:00",
+  "connector": "noop",
+  "delete_result": {},
+  "destination_id": "e0b59999-3fbd-424e-8d77-a1fb5cd40cb5",
+  "error_code": "CONNECTOR_DISABLED",
+  "live_url": null,
+  "platform_post_id": null,
+  "reason": "Connector is disabled by configuration.",
+  "started_at": "2026-10-17T07:53:14.196964+00:00",
+  "status": "failed",
+  "status_result": {}
+}

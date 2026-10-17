@@ -7,7 +7,10 @@ import yaml
 
 from app.connectors.assisted import AssistedConnector
 from app.connectors.devto import DevtoConnector
+from app.connectors.discourse import DiscourseConnector
+from app.connectors.ghost import GhostConnector
 from app.connectors.http import PlatformResponse
+from app.connectors.lemmy import LemmyConnector
 from app.connectors.webhook import WebhookConnector
 from app.errors import AppError
 
@@ -83,6 +86,54 @@ def test_devto_rate_limit_uses_reset_header_before_one_retry(monkeypatch):
     assert waits == [2.0]
     assert len(adapter.requests) == 2
     assert result["platform_post_id"] == "7"
+
+
+def test_discourse_publishes_checks_status_and_deletes():
+    adapter = SequenceAdapter(
+        PlatformResponse(201, {"id": 11, "url": "https://forum.example/t/hello/11"}, {}),
+        PlatformResponse(200, {"url": "https://forum.example/t/hello/11"}, {}),
+        PlatformResponse(204, {}, {}),
+    )
+    connector = DiscourseConnector(manifest("discourse"), adapter, simulation_mode=False, mock_url="")
+    destination = {"base_url": "https://forum.example"}
+    connection = {"api_key": "forum-key", "api_username": "incubrix", "base_url": "https://forum.example"}
+    published = connector.publish({"title": "Hello", "body": "World"}, destination, connection, "disc-1")
+    assert published["platform_post_id"] == "11"
+    assert adapter.requests[0]["headers"]["Api-Key"] == "forum-key"
+    assert connector.get_status("11", connection)["status"] == "live"
+    assert connector.delete("11", connection)["deleted"] is True
+
+
+def test_lemmy_publishes_checks_status_and_deletes():
+    adapter = SequenceAdapter(
+        PlatformResponse(200, {"post": {"id": 12, "ap_id": "https://lemmy.example/post/12"}}, {}),
+        PlatformResponse(200, {"post": {"id": 12, "ap_id": "https://lemmy.example/post/12"}}, {}),
+        PlatformResponse(200, {}, {}),
+    )
+    connector = LemmyConnector(manifest("lemmy"), adapter, simulation_mode=False, mock_url="")
+    destination = {"base_url": "https://lemmy.example", "category": "7"}
+    connection = {"auth": "jwt-token", "base_url": "https://lemmy.example"}
+    published = connector.publish({"title": "Hello", "body": "World"}, destination, connection, "lemmy-1")
+    assert published["platform_post_id"] == "12"
+    assert adapter.requests[0]["json"]["community_id"] == "7"
+    assert connector.get_status("12", connection)["status"] == "live"
+    assert connector.delete("12", connection)["deleted"] is True
+
+
+def test_ghost_publishes_checks_status_and_deletes():
+    adapter = SequenceAdapter(
+        PlatformResponse(201, {"posts": [{"id": "13", "url": "https://blog.example/hello/"}]}, {}),
+        PlatformResponse(200, {"posts": [{"id": "13", "url": "https://blog.example/hello/"}]}, {}),
+        PlatformResponse(204, {}, {}),
+    )
+    connector = GhostConnector(manifest("ghost"), adapter, simulation_mode=False, mock_url="")
+    destination = {"base_url": "https://blog.example"}
+    connection = {"admin_token": "ghost-token", "base_url": "https://blog.example"}
+    published = connector.publish({"title": "Hello", "body": "World"}, destination, connection, "ghost-1")
+    assert published["platform_post_id"] == "13"
+    assert adapter.requests[0]["headers"]["Authorization"] == "Ghost ghost-token"
+    assert connector.get_status("13", connection)["status"] == "live"
+    assert connector.delete("13", connection)["deleted"] is True
 
 
 def test_manifest_limits_return_field_level_violations():

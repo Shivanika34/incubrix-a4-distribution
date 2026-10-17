@@ -19,6 +19,7 @@ class Job(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
     progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     result_links: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    result: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
@@ -50,6 +51,7 @@ class Destination(Base):
     geo: Mapped[str | None] = mapped_column(String(64))
     est_audience: Mapped[int | None] = mapped_column(Integer)
     rules_url: Mapped[str | None] = mapped_column(String(2048))
+    submit_url: Mapped[str | None] = mapped_column(String(2048))
     frequency_cap: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     self_promo_allowed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     link_policy: Mapped[str] = mapped_column(String(32), nullable=False, default="allow")
@@ -71,6 +73,22 @@ class RuleDecision(Base):
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class CertificationRun(Base):
+    __tablename__ = "certification_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    destination_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    platform_post_id: Mapped[str | None] = mapped_column(String(255))
+    live_url: Mapped[str | None] = mapped_column(String(2048))
+    status_result: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    delete_result: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    reason: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 def make_database(database_url: str):
