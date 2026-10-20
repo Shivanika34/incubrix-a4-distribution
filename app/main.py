@@ -16,7 +16,7 @@ from app.adapters import DatabaseReadiness, ReadinessAdapter, ServiceReadiness
 from app.artifacts import EphemeralArtifactStore, S3ArtifactStore, SafeURLFetcher
 from app.callbacks import CallbackAdapter, HttpCallbackAdapter
 from app.config import Settings
-from app.database import make_database
+from app.database import initialize_database_schema, make_database
 from app.connectors.registry import ConnectorRegistry
 from app.errors import AppError
 from app.discourse_community import DiscourseCommunityClient
@@ -48,10 +48,13 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
-        yield
-        if getattr(_app.state, "jobs", None) is not None:
-            _app.state.jobs.shutdown()
-        engine.dispose()
+        try:
+            initialize_database_schema(engine)
+            yield
+        finally:
+            if getattr(_app.state, "jobs", None) is not None:
+                _app.state.jobs.shutdown()
+            engine.dispose()
 
     application = FastAPI(title="IncuBrix Long-Tail Distribution", version="0.1.0", lifespan=lifespan)
     application.state.session_factory = session_factory
