@@ -117,10 +117,14 @@ class RuleProposal(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+def initialize_database_schema(engine) -> None:
+    Base.metadata.create_all(engine)
+
+
 def make_database(database_url: str):
     is_sqlite = database_url.startswith("sqlite")
     options = {"connect_args": {"check_same_thread": False}, "poolclass": NullPool} if is_sqlite else {}
     engine = create_engine(database_url, pool_pre_ping=True, **options)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
-    Base.metadata.create_all(engine)
+    initialize_database_schema(engine)
     return engine, factory
