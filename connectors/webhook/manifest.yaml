@@ -13,7 +13,7 @@ rate_limits:
   per_connection:
     requests: 60
     per_seconds: 60
-capabilities: [publish, status, delete]
+capabilities: [publish]
 error_map:
   "401": CONNECTION_AUTH_EXPIRED
   "403": CONNECTION_AUTH_EXPIRED

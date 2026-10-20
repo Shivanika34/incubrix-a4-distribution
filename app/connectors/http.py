@@ -23,7 +23,7 @@ class HttpxPlatformHttpAdapter:
         self.timeout_seconds = timeout_seconds
 
     def request(self, method: str, url: str, *, headers: dict[str, str], json: dict[str, Any] | None = None) -> PlatformResponse:
-        with httpx.Client(timeout=self.timeout_seconds) as client:
+        with httpx.Client(timeout=self.timeout_seconds, follow_redirects=False) as client:
             response = client.request(method, url, headers=headers, json=json)
         try:
             body = response.json()

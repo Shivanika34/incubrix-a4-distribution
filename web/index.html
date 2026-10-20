@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>IncuBrix · Publishing demo</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #152238; background: #f3f6fa; font-synthesis: none; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #101d31; color: #fff; padding: 22px max(24px, calc((100vw - 1120px)/2)); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    header h1 { font-size: 20px; margin: 0; letter-spacing: .01em; }
+    header p { margin: 5px 0 0; color: #c8d4e3; font-size: 13px; }
+    main { max-width: 1120px; margin: 24px auto 64px; padding: 0 20px; display: grid; gap: 18px; }
+    .panel { background: #fff; border: 1px solid #dbe3ee; border-radius: 13px; padding: 20px; box-shadow: 0 5px 18px #1522380a; }
+    .panel h2 { font-size: 17px; margin: 0 0 14px; }
+    .subtle, .hint { color: #58677c; font-size: 13px; line-height: 1.5; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 12px; }
+    label { display: grid; gap: 6px; font-size: 13px; font-weight: 650; }
+    input, textarea, select { width: 100%; border: 1px solid #cbd6e3; border-radius: 8px; padding: 10px 11px; background: #fff; color: #152238; font: inherit; font-size: 14px; }
+    textarea { min-height: 165px; resize: vertical; line-height: 1.5; }
+    input[type=checkbox] { width: auto; accent-color: #245ce2; }
+    button { border: 0; border-radius: 8px; padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer; background: #e8edf5; color: #182a42; }
+    button.primary { color: white; background: #245ce2; }
+    button.danger { color: white; background: #a13232; }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    .pill { display: inline-flex; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 700; background: #edf1f6; color: #3e4e64; }
+    .pill.ok { color: #14613d; background: #e2f5eb; }
+    .pill.warn { color: #805509; background: #fff2d5; }
+    .pill.bad { color: #902e2e; background: #fde8e8; }
+    .destination { border: 1px solid #dbe3ee; border-radius: 10px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+    .platform-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .platform-grid .destination { min-height:100%; }
+    .composer textarea { min-height:260px; }
+    .workflow-step { color:#245ce2; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+    .destination-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .destination-head strong { display: block; margin-bottom: 4px; }
+    .connector-config { border-top: 1px solid #e7ecf2; padding-top: 12px; display: grid; gap: 10px; }
+    .connector-config[hidden] { display: none; }
+    .notice { border-left: 4px solid #d39416; background: #fff8e8; color: #5a4618; padding: 12px 14px; border-radius: 6px; font-size: 13px; line-height: 1.5; }
+    .notice.error { border-color: #bf3f3f; background: #fff0f0; color: #692525; }
+    .notice.info { border-color: #456ab9; background: #edf3ff; color: #263c68; }
+    pre { overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #101d31; color: #e4edf8; border-radius: 9px; padding: 14px; font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; max-height: 440px; }
+    .outcome { border-top: 1px solid #e7ecf2; padding: 12px 0; display: grid; gap: 6px; }
+    .outcome:first-child { border-top: 0; }
+    .topic { border-top: 1px solid #e7ecf2; padding: 12px 0; display: grid; gap: 5px; }
+    .topic:first-child { border-top: 0; }
+    a { color: #245ce2; }
+    .right { margin-left: auto; }
+    #apiStatus { display: flex; align-items: center; gap: 8px; }
+    @media (max-width: 820px) { .platform-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 640px) { header { align-items: flex-start; flex-direction: column; } main { margin-top: 14px; padding: 0 12px; } .panel { padding: 15px; } .platform-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>IncuBrix publishing demo</h1><p>Preview, check destination rules, then dispatch through the existing workflow.</p></div>
+    <div id="apiStatus"><span class="pill">Connecting…</span></div>
+  </header>
+  <main>
+    <section class="panel composer">
+      <div class="workflow-step">Step 1 · Start with your content</div>
+      <h2>What would you like to publish?</h2>
+      <div class="grid">
+        <label>Title<input id="title" maxlength="500" placeholder="A useful article"></label>
+        <label>Canonical URL (optional)<input id="canonical" type="url" placeholder="https://example.com/article"></label>
+      </div>
+      <label style="margin-top:12px">Body<textarea id="body" placeholder="Write or paste your content here…"></textarea></label>
+    </section>
+
+    <section class="panel">
+      <div class="row"><div><div class="workflow-step">Step 2 · Choose where it goes</div><h2 style="margin:0">Select platforms</h2></div><button id="reload" class="right">Refresh</button></div>
+      <p class="subtle">Choose one or more configured destinations. Server-managed credentials stay on the backend. Checks confirm configuration shape only; they do not authenticate remotely.</p>
+      <div id="destinations" class="platform-grid"></div>
+      <div id="noDestinations" class="notice info" hidden>No destinations are configured yet. Add one below; secrets are not stored in the destination record.</div>
+      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">Add a destination</summary>
+        <div class="grid" style="margin-top:12px">
+          <label>Platform<select id="newConnector"></select></label>
+          <label>Destination name<input id="newName" placeholder="My test destination"></label>
+          <label>Base URL<input id="newUrl" type="url" placeholder="https://…"></label>
+          <label id="categoryLabel">Category or community ID<input id="newCategory" placeholder="Required for Discourse and Lemmy"><span class="field-note">Discourse category ID or Lemmy community ID. For Lemmy, use the numeric ID.</span></label>
+        </div>
+        <div class="grid" style="margin-top:12px">
+          <label>Link policy<select id="newLinkPolicy"><option value="block" selected>Block links until rules are confirmed</option><option value="strip">Strip links</option><option value="allow">Allow links</option></select></label>
+          <label class="row" style="display:flex"><input id="newPromo" type="checkbox"><span>Self-promotion is allowed by this destination's rules</span></label>
+          <label class="row" style="display:flex"><input id="newDisclosure" type="checkbox" checked><span>Disclosure is required</span></label>
+          <label class="row" style="display:flex"><input id="newAutomation" type="checkbox"><span>Automated posting is allowed (leave off if unsure)</span></label>
+        </div>
+        <div class="row" style="margin-top:12px"><button id="createDestination" class="primary">Add destination</button><span class="hint">New automated destinations start uncertified; the app will not publish until its readiness rules allow it.</span></div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <div class="workflow-step">Step 3 · Review before dispatch</div><h2>Preview and destination rules</h2>
+      <div class="row"><button id="preview" class="primary">Preview selected destinations</button><span id="previewState" class="hint">Select at least one destination and enter content.</span></div>
+      <div id="previewResults" style="margin-top:14px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="workflow-step">Step 4 · Run the workflow</div><h2>Dispatch and results</h2>
+      <div id="modeNotice" class="notice info">Loading application mode…</div>
+      <label class="row" style="display:flex;margin:14px 0"><input id="confirmLive" type="checkbox"><span>I reviewed the latest preview and explicitly authorize dispatch to the selected destinations in the mode shown above.</span></label>
+      <div class="row"><button id="dispatch" class="danger" disabled>Start publishing job</button><button id="retrySame" hidden>Retry same request safely</button><button id="refreshJob" hidden>Check same job</button><span class="hint">Dispatch is unavailable until a fresh preview and configuration check succeed, and this confirmation is checked.</span></div>
+      <div id="jobResults" style="margin-top:14px"></div>
+    </section>
+    <details class="panel" style="padding:0"><summary style="cursor:pointer;font-weight:700;padding:18px 20px">Optional · Browse the public Discourse community</summary>
+      <div style="padding:0 20px 20px"><p class="subtle">Read public categories and discussions. This panel never publishes or replies.</p>
+      <div class="row"><a id="discourseCommunityLink" href="http://127.0.0.1:3000/" target="_blank" rel="noopener noreferrer">Open community</a><label>Category filter<select id="discourseCategory"><option value="">All categories</option></select></label><button id="refreshDiscourse">Refresh topics</button></div>
+      <div id="discourseState" class="hint" style="margin-top:10px">Open this section to load public topics.</div><div id="discourseTopics" style="margin-top:8px"></div><div id="discourseTopicDetail" style="margin-top:12px"></div></div>
+    </details>
+  </main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const apiStatus = $('apiStatus');
+  const destinationRoot = $('destinations');
+  const connectorsByKey = new Map();
+  let destinations = [];
+  let simulationMode = true;
+  let previewSignature = null;
+  let dispatchState = 'idle';
+  let dispatchKey = null;
+  let dispatchPayload = null;
+  let dispatchUnknown = false;
+  let hasUncertainOutcome = false;
+  let activeJobId = null;
+  let discourseCategories = [];
+  let discourseTopics = [];
+  let discourseBaseUrl = 'http://127.0.0.1:3000';
+
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const key = () => `ui-${crypto.randomUUID()}`;
+  const safeWebUrl = (value) => {
+    try { const parsed=new URL(value,window.location.href); return ['http:','https:'].includes(parsed.protocol) ? parsed.href : null; }
+    catch { return null; }
+  };
+  const selectedCards = () => [...destinationRoot.querySelectorAll('.destination')].filter(card => card.querySelector('.dest-select').checked);
+  const connectionFor = (card) => {
+    const connection = {};
+    const destination = destinations.find(d => d.id === card.dataset.destinationId);
+    if (destination?.connector_key === 'lemmy' && destination.category) connection.community_id = destination.category;
+    return connection;
+  };
+  const currentPayload = (dispatch) => {
+    const cards = selectedCards();
+    const title = $('title').value.trim();
+    const body = $('body').value.trim();
+    if (!cards.length) throw new Error('Select at least one destination.');
+    if (!title || !body) throw new Error('Enter both a title and body.');
+    const content_item = {title, body};
+    if ($('canonical').value.trim()) content_item.canonical_url = $('canonical').value.trim();
+    const connections = {};
+    for (const card of cards) connections[card.dataset.destinationId] = connectionFor(card);
+    return {content_item, destination_ids: cards.map(card => card.dataset.destinationId), dispatch, connections};
+  };
+  const signature = (payload) => JSON.stringify(payload);
+  const invalidatePreview = () => {
+    if (dispatchState === 'idle') {
+      previewSignature = null;
+      $('dispatch').disabled = true;
+      $('previewState').textContent = 'Content, destinations or credentials changed. Run a fresh preview before dispatch.';
+    }
+  };
+  const formatError = async (response) => {
+    let data;
+    try { data = await response.json(); } catch { return `HTTP ${response.status}: ${response.statusText}`; }
+    return data?.error?.message || data?.detail || `HTTP ${response.status}`;
+  };
+  const api = async (path, options = {}) => {
+    const response = await fetch(path, {...options, headers: {'Content-Type': 'application/json', ...(options.headers || {})}});
+    if (!response.ok) throw new Error(await formatError(response));
+    return response.status === 204 ? null : response.json();
+  };
+  const setApiStatus = (text, kind = '') => {
+    apiStatus.replaceChildren(el('span', `pill ${kind}`, text));
+  };
+
+  function renderDiscourseTopics() {
+    const root = $('discourseTopics'); root.replaceChildren();
+    const selected = $('discourseCategory').value;
+    const shown = discourseTopics.filter(topic => !selected || String(topic.category_id) === selected);
+    if (!shown.length) { root.append(el('p','subtle','No public topics match this category.')); return; }
+    for (const topic of shown) {
+      const row = el('article','topic');
+      const link = el('a','',topic.title || `Topic ${topic.id}`);
+      link.href = `${discourseBaseUrl}${topic.url}`; link.target='_blank'; link.rel='noopener noreferrer';
+      const category = discourseCategories.find(item => item.id === topic.category_id)?.name || 'Uncategorized';
+      const byline = [topic.author ? `by ${topic.author}` : null, topic.last_poster ? `latest activity by ${topic.last_poster}` : null].filter(Boolean).join(' · ');
+      row.append(link,el('span','subtle',`${category} · ${topic.reply_count} replies${byline ? ` · ${byline}` : ''}`));
+      const detail = el('button','','View discussion details');
+      detail.addEventListener('click',()=>loadDiscourseTopic(topic.id)); row.append(detail); root.append(row);
+    }
+  }
+
+  async function loadDiscourseTopic(topicId) {
+    const target=$('discourseTopicDetail'); target.replaceChildren(el('p','subtle','Loading discussion…'));
+    try {
+      const topic=await api(`/api/v1/community/discourse/topics/${encodeURIComponent(topicId)}`);
+      target.replaceChildren(el('h3','',topic.title));
+      const link=el('a','','Open original discussion'); link.href=safeWebUrl(topic.url); link.target='_blank'; link.rel='noopener noreferrer'; target.append(link);
+      target.append(el('p','subtle',`${topic.reply_count} replies · ${topic.posts_count} posts`));
+      for (const post of topic.posts || []) {
+        const article=el('article','topic');
+        article.append(el('strong','',`${post.author} · post ${post.post_number || ''}`));
+        const body=el('p','subtle',post.body || '(No plain-text post body returned.)'); article.append(body); target.append(article);
+      }
+    } catch(error) { target.replaceChildren(el('div','notice error',`Could not load discussion: ${error.message}`)); }
+  }
+
+  async function loadDiscourse() {
+    const state=$('discourseState'); state.textContent='Loading public categories and latest topics…'; state.className='hint';
+    try {
+      const [categoryResult, topicResult]=await Promise.all([
+        api('/api/v1/community/discourse/categories'), api('/api/v1/community/discourse/topics?per_page=20')
+      ]);
+      discourseBaseUrl=categoryResult.community_url.replace(/\/$/,'');
+      $('discourseCommunityLink').href=`${discourseBaseUrl}/`;
+      discourseCategories=categoryResult.categories; discourseTopics=topicResult.topics;
+      const selector=$('discourseCategory'); const current=selector.value;
+      selector.replaceChildren(new Option('All categories',''));
+      for(const category of discourseCategories) selector.add(new Option(category.name,String(category.id)));
+      selector.value=current;
+      state.textContent=`${discourseCategories.length} categories · ${discourseTopics.length} latest topics`;
+      renderDiscourseTopics();
+    } catch(error) { state.textContent=`Public Discourse community unavailable: ${error.message}`; state.className='hint bad'; $('discourseTopics').replaceChildren(); }
+  }
+  $('discourseCategory').addEventListener('change',renderDiscourseTopics);
+  $('refreshDiscourse').addEventListener('click',loadDiscourse);
+
+  function renderDestinations() {
+    destinationRoot.replaceChildren();
+    $('noDestinations').hidden = destinations.length !== 0;
+    for (const connector of connectorsByKey.values()) {
+      const matches = destinations.filter(d => d.connector_key === connector.key);
+      for (const destination of matches) {
+        const card = el('article', 'destination');
+        card.dataset.destinationId = destination.id;
+        card.dataset.configStatus = 'not_checked';
+        const head = el('div', 'destination-head');
+        const description = el('div');
+        const name = el('strong', '', destination.name);
+        const url = el('span', 'hint', `${destination.url} · ${destination.surface}`);
+        const readiness = el('span', `pill ${destination.last_certified_at && ['L3','L4'].includes(destination.level) ? 'ok' : 'warn'}`, `Connector ${connector.enabled ? 'enabled' : 'disabled'} · ${destination.level || 'L0'}${destination.last_certified_at ? ' certified' : ' not certified'}`);
+        description.append(name, url, document.createElement('br'), readiness);
+        const pickLabel = el('label', 'row');
+        pickLabel.style.display = 'flex';
+        const pick = document.createElement('input'); pick.type = 'checkbox'; pick.className = 'dest-select'; pick.addEventListener('change', () => { card.querySelector('.connector-config').hidden = !pick.checked; invalidatePreview(); });
+        pickLabel.append(pick, document.createTextNode('Select'));
+        head.append(description, pickLabel);
+        const config = el('div', 'connector-config'); config.hidden = true;
+        const authState = connector.server_configured
+          ? 'Server credentials are configured. The backend will use them automatically for this platform.'
+          : simulationMode
+            ? 'Simulation uses the local mock; real account credentials are not required.'
+            : 'Server credentials are not configured. Add this platform’s credentials to the backend environment.';
+        config.append(el('span', `hint ${connector.server_configured || simulationMode ? 'ok' : 'bad'}`, authState));
+        const actionRow = el('div','row');
+        const check = el('button','','Check configuration');
+        const status = el('span','hint','Not checked'); status.dataset.configStatus = 'true';
+        check.addEventListener('click', async () => {
+          check.disabled = true; status.textContent = 'Checking required fields…';
+          try {
+            const result = await api(`/api/v1/connectors/${encodeURIComponent(connector.key)}/configuration-check`, {
+              method:'POST', headers:{'Idempotency-Key':key()}, body:JSON.stringify({destination_id:destination.id, connection:connectionFor(card)})
+            });
+            card.dataset.configStatus=result.status;
+            status.textContent = result.configuration_valid ? 'Required fields present. Remote credentials not tested.' : `${result.status}: ${result.missing_fields.join(', ') || result.message}`;
+            if (result.status === 'simulation_mode') status.textContent=result.message;
+            status.className = `hint ${result.ready_for_dispatch ? 'ok' : 'bad'}`;
+          } catch (error) { card.dataset.configStatus='check_failed'; status.textContent = `Check failed: ${error.message}`; status.className = 'hint bad'; }
+          finally { check.disabled = false; dispatchReady(); }
+        });
+        actionRow.append(check,status); config.append(actionRow);
+        card.append(head,config); destinationRoot.append(card);
+      }
+    }
+    const picker = $('newConnector');
+    if (!picker.options.length) for (const connector of connectorsByKey.values()) picker.add(new Option(connector.label, connector.key));
+  }
+
+  async function load() {
+    setApiStatus('Connecting…');
+    try {
+      const [connectorResponse, destinationResponse] = await Promise.all([api('/api/v1/connectors'), api('/api/v1/destinations')]);
+      connectorsByKey.clear();
+      for (const connector of connectorResponse.connectors) connectorsByKey.set(connector.key, connector);
+      destinations = destinationResponse;
+      simulationMode = connectorResponse.simulation_mode;
+      setApiStatus('API ready','ok');
+      $('modeNotice').textContent = simulationMode
+        ? 'SIMULATION MODE: dispatch uses the configured local mock platform; this will not publish to real accounts.'
+        : 'LIVE CONNECTOR MODE: dispatch may publish to the configured real destinations. Preview first and confirm every target.';
+      $('modeNotice').className = `notice ${simulationMode ? 'info' : ''}`;
+      renderDestinations();
+    } catch (error) {
+      setApiStatus('API unavailable','bad');
+      $('modeNotice').textContent = `Could not load the publishing API from ${location.origin}: ${error.message}. Check that this page and backend use the same origin, then refresh.`;
+      $('modeNotice').className = 'notice error';
+    }
+  }
+
+  $('newConnector').addEventListener('change', () => {
+    const connector = connectorsByKey.get($('newConnector').value);
+    const defaults = {ghost:'https://your-site.ghost.io',devto:'https://dev.to/api',discourse:'https://your-discourse.example',lemmy:'https://your-lemmy.example'};
+    $('newUrl').value = defaults[connector?.key] || '';
+    $('newCategory').placeholder = connector?.key === 'lemmy' ? 'Numeric community ID' : connector?.key === 'discourse' ? 'Category ID' : 'Not required for this platform';
+  });
+  $('createDestination').addEventListener('click', async () => {
+    const connectorKey = $('newConnector').value;
+    const connector = connectorsByKey.get(connectorKey);
+    const name = $('newName').value.trim();
+    const url = $('newUrl').value.trim();
+    if (!name || !url) return alert('Enter a destination name and base URL.');
+    if (['discourse','lemmy'].includes(connectorKey) && !$('newCategory').value.trim()) return alert('Enter the required category/community ID.');
+    const body = {
+      name, url, platform_key:connectorKey, connector_key:connectorKey,
+      surface:{ghost:'post',devto:'article',discourse:'topic',lemmy:'community_post'}[connectorKey],
+      category:$('newCategory').value.trim() || null, audience_tags:[], frequency_cap:{},
+      self_promo_allowed:$('newPromo').checked, link_policy:$('newLinkPolicy').value,
+      disclosure_required:$('newDisclosure').checked,
+      automation_allowed:$('newAutomation').checked, level:'L0'
+    };
+    try {
+      await api('/api/v1/destinations',{method:'POST',headers:{'Idempotency-Key':key()},body:JSON.stringify(body)});
+      $('newName').value=''; $('newCategory').value=''; await load();
+    } catch (error) { alert(`Could not add destination: ${error.message}`); }
+  });
+
+  function artifactLinks(target, artifacts) {
+    if (!artifacts || typeof artifacts !== 'object') return;
+    for (const [name, item] of Object.entries(artifacts)) {
+      const href=safeWebUrl(item?.download_url);
+      if (!href) continue;
+      const link = el('a','',`Download ${name}`); link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      target.append(link, document.createTextNode(' '));
+    }
+  }
+  function renderOutcomes(target, outcomes) {
+    for (const outcome of outcomes || []) {
+      const row = el('div','outcome');
+      const name = destinations.find(d=>d.id===outcome.destination_id)?.name || outcome.destination_id || 'Destination';
+      const displayedStatus=simulationMode && outcome.status==='published' ? 'simulated publish' : (outcome.status || 'unknown');
+      row.append(el('strong','',`${name} · ${displayedStatus}`));
+      if (outcome.reason) row.append(el('span','subtle',outcome.reason));
+      if (outcome.error_code) row.append(el('span','pill bad',outcome.error_code));
+      if (outcome.recommendation_explanation) row.append(el('span','subtle',outcome.recommendation_explanation));
+      if (outcome.tailored_content) {
+        const detail = document.createElement('details'); const summary = el('summary','','Tailored preview'); summary.style.cursor='pointer';
+        const pre = el('pre'); pre.textContent = JSON.stringify({content:outcome.tailored_content, rules:outcome.rule_decision || outcome.readiness, warnings:outcome.warnings},null,2); detail.append(summary,pre); row.append(detail);
+      }
+      if (outcome.posting_pack) { const pre=el('pre'); pre.textContent=JSON.stringify(outcome.posting_pack,null,2); row.append(el('strong','','Manual posting pack'),pre); }
+      const liveUrl=outcome.live_url ? safeWebUrl(outcome.live_url) : null;
+      if (liveUrl) { const a=el('a','', 'Open published item'); a.href=liveUrl; a.target='_blank'; a.rel='noopener noreferrer'; row.append(a); }
+      target.append(row);
+    }
+  }
+  function showJson(target, value) { const pre=el('pre'); pre.textContent=JSON.stringify(value,null,2); target.append(pre); }
+  function dispatchReady() {
+    const cards=selectedCards();
+    const configReady=cards.length>0 && cards.every(card=>['configuration_valid','simulation_mode'].includes(card.dataset.configStatus));
+    const enabled = dispatchState === 'idle' && !!previewSignature && configReady && !hasUncertainOutcome && $('confirmLive').checked;
+    $('dispatch').disabled = !enabled;
+  }
+  $('confirmLive').addEventListener('change',dispatchReady);
+  for (const id of ['title','body','canonical']) $(id).addEventListener('input',invalidatePreview);
+  $('preview').addEventListener('click', async () => {
+    $('preview').disabled=true; $('previewResults').replaceChildren(); $('previewState').textContent='Running preview and rule checks…';
+    try {
+      const payload=currentPayload(false);
+      const result=await api('/api/v1/publishing-orchestrations/preview',{method:'POST',headers:{'Idempotency-Key':key()},body:JSON.stringify(payload)});
+      previewSignature=signature(payload); $('previewState').textContent='Preview complete. Review each destination result before dispatch.';
+      renderOutcomes($('previewResults'),result.destinations);
+      artifactLinks($('previewResults'),result.artifacts);
+      if (!result.destinations?.length) showJson($('previewResults'),result);
+      dispatchReady();
+    } catch(error) { previewSignature=null; $('previewState').textContent=`Preview failed: ${error.message}`; $('previewState').className='hint bad'; dispatchReady(); }
+    finally { $('preview').disabled=false; }
+  });
+
+  async function pollJob(jobId) {
+    activeJobId=jobId;
+    $('refreshJob').hidden=false;
+    $('jobResults').replaceChildren(el('p','subtle',`Job ${jobId}: checking status…`));
+    const started=Date.now();
+    while (Date.now()-started < 180000) {
+      let job;
+      try { job=await api(`/api/v1/jobs/${encodeURIComponent(jobId)}`); }
+      catch(error) { $('jobResults').replaceChildren(el('div','notice error',`Could not retrieve job status: ${error.message}. Job ${jobId} may still be running; use “Check same job” to poll it again.`)); return; }
+      const report=job.result?.orchestration;
+      $('jobResults').replaceChildren(el('p','',`Job ${job.job_id} · ${job.status} · ${job.progress}%`));
+      if (report?.destinations) renderOutcomes($('jobResults'),report.destinations);
+      artifactLinks($('jobResults'),job.result?.artifacts);
+      if (report) showJson($('jobResults'),report.totals || report);
+      const statuses=(report?.destinations||[]).map(item=>item.status);
+      if (statuses.includes('outcome_unknown')) {
+        hasUncertainOutcome=true; dispatchState='complete';
+        $('jobResults').prepend(el('div','notice error','A destination has an uncertain publication outcome. Do not submit it again. Reconcile the post on the platform before attempting another publication.'));
+      }
+      if (['succeeded','partial','failed'].includes(job.status)) { if(dispatchState!=='complete') dispatchState='complete'; return; }
+      await new Promise(resolve=>setTimeout(resolve,1800));
+    }
+    $('jobResults').prepend(el('div','notice info','Polling stopped after three minutes. The job may continue; check the same job ID. Do not create a new publishing request while its outcome is unresolved.'));
+  }
+  async function submitDispatch(replay=false) {
+    if (dispatchState!=='idle' && !(replay && dispatchUnknown)) return;
+    if (!dispatchKey) {
+      dispatchKey=key();
+      dispatchPayload=currentPayload(true);
+    }
+    dispatchState='submitting'; dispatchUnknown=false; $('dispatch').disabled=true; $('retrySame').hidden=true;
+    $('jobResults').replaceChildren(el('p','subtle','Submitting the job…'));
+    try {
+      const job=await api('/api/v1/publishing-orchestrations',{method:'POST',headers:{'Idempotency-Key':dispatchKey},body:JSON.stringify(dispatchPayload)});
+      dispatchUnknown=false; dispatchState='running';
+      await pollJob(job.job_id);
+    } catch(error) {
+      dispatchState='idle'; dispatchUnknown=true;
+      $('jobResults').replaceChildren(el('div','notice error',`The job response was not confirmed: ${error.message}. The request may have been accepted. Do not create a new key or edit this request; retry the exact request using the same idempotency key to recover the original job.`));
+      $('retrySame').hidden=false;
+      $('retrySame').onclick=()=>submitDispatch(true);
+    } finally { dispatchReady(); }
+  }
+  $('dispatch').addEventListener('click', async () => {
+    if (!confirm(`Dispatch to ${selectedCards().length} selected destination(s) in ${simulationMode?'SIMULATION':'LIVE'} mode?`)) return;
+    try {
+      const payload=currentPayload(false);
+      if (previewSignature!==signature(payload)) return alert('The selection or content differs from the last preview. Run preview again.');
+      await submitDispatch(false);
+    } catch(error) { alert(error.message); }
+  });
+  $('reload').addEventListener('click',load);
+  $('refreshJob').addEventListener('click',()=>{if(activeJobId) pollJob(activeJobId);});
+  document.querySelector('details.panel summary').addEventListener('click', () => {
+    if ($('discourseState').textContent === 'Open this section to load public topics.') loadDiscourse();
+  });
+  load();
+})();
+</script>
+</body>
+</html>

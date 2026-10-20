@@ -31,21 +31,21 @@ def test_error_mapping_uses_manifest_mapping():
 
 def test_connector_dispatch_validate_publish_status_and_delete(client):
     payload = {"rendition": {"title": "Hello", "body": "A post"}, "destination": destination(), "idempotency_key": "post-1"}
-    validated = client.post("/connector/v1/noop/validate", json=payload)
+    validated = client.post("/connector/v1/noop/validate", headers={"Idempotency-Key": "validate-1"}, json=payload)
     assert validated.status_code == 200 and validated.json() == {"ok": True, "violations": []}
 
-    published = client.post("/connector/v1/noop/publish", json=payload)
+    published = client.post("/connector/v1/noop/publish", headers={"Idempotency-Key": "post-1"}, json=payload)
     assert published.status_code == 200
     post_id = published.json()["platform_post_id"]
-    assert client.post("/connector/v1/noop/get_status", json={"platform_post_id": post_id}).json()["status"] == "live"
-    assert client.post("/connector/v1/noop/delete", json={"platform_post_id": post_id}).json() == {"deleted": True}
+    assert client.post("/connector/v1/noop/get_status", headers={"Idempotency-Key": "status-1"}, json={"platform_post_id": post_id}).json()["status"] == "live"
+    assert client.post("/connector/v1/noop/delete", headers={"Idempotency-Key": "delete-1"}, json={"platform_post_id": post_id}).json() == {"deleted": True}
 
 
 def test_unknown_connector_and_method_use_standard_errors(client):
-    unknown = client.post("/connector/v1/missing/publish", json={})
+    unknown = client.post("/connector/v1/missing/publish", headers={"Idempotency-Key": "unknown-1"}, json={})
     assert unknown.status_code == 404
     assert unknown.json()["error"]["code"] == "CONNECTOR_NOT_FOUND"
-    method = client.post("/connector/v1/noop/missing", json={})
+    method = client.post("/connector/v1/noop/missing", headers={"Idempotency-Key": "unknown-method-1"}, json={})
     assert method.status_code == 400
     assert method.json()["error"]["code"] == "CONNECTOR_METHOD_NOT_FOUND"
 
@@ -53,14 +53,14 @@ def test_unknown_connector_and_method_use_standard_errors(client):
 def test_connector_kill_switch(settings):
     app = create_app(settings=replace(settings, connector_disabled=frozenset({"noop"})))
     with TestClient(app) as client:
-        response = client.post("/connector/v1/noop/publish", json={"rendition": {}, "destination": destination()})
+        response = client.post("/connector/v1/noop/publish", headers={"Idempotency-Key": "disabled-1"}, json={"rendition": {}, "destination": destination()})
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "CONNECTOR_DISABLED"
 
 
 def test_two_destinations_use_one_connector_without_code_change(client):
-    first = client.post("/api/v1/destinations", json=destination("Forum one"))
-    second = client.post("/api/v1/destinations", json={**destination("Forum two"), "url": "https://two.example.test"})
+    first = client.post("/api/v1/destinations", headers={"Idempotency-Key": "destination-1"}, json=destination("Forum one"))
+    second = client.post("/api/v1/destinations", headers={"Idempotency-Key": "destination-2"}, json={**destination("Forum two"), "url": "https://two.example.test"})
     assert first.status_code == second.status_code == 201
     rows = client.get("/api/v1/destinations").json()
     assert [row["name"] for row in rows] == ["Forum one", "Forum two"]

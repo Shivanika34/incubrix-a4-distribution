@@ -2,6 +2,7 @@ key: devto
 version: 1.0.0
 tier: native
 auth: api_key
+api_version: v1
 surfaces:
   - key: article
     content_types: [text, image]
@@ -13,7 +14,7 @@ rate_limits:
   per_connection:
     requests: 30
     per_seconds: 60
-capabilities: [publish, status, delete]
+capabilities: [publish, status, unpublish]
 error_map:
   "401": CONNECTION_AUTH_EXPIRED
   "422": PLATFORM_CONTENT_REJECTED

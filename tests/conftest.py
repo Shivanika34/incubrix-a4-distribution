@@ -8,6 +8,33 @@ from fastapi.testclient import TestClient
 from app.config import Settings
 from app.main import create_app
 
+
+class FakeArtifactStore:
+    def __init__(self):
+        self.objects = {}
+        self.fail = False
+
+    def put_bytes(self, key, data, content_type):
+        if self.fail:
+            from app.errors import AppError
+            raise AppError("ARTIFACT_STORAGE_FAILED", "mock storage failure", True)
+        self.objects[key] = (data, content_type)
+        return {
+            "uri": f"s3://test-bucket/{key}",
+            "download_url": f"https://storage.test/{key}",
+            "content_type": content_type,
+            "size_bytes": len(data),
+        }
+
+
+class FakeContentFetcher:
+    def __init__(self):
+        self.calls = []
+
+    def fetch(self, url, max_bytes):
+        self.calls.append((url, max_bytes))
+        return b'{"content_item":{"title":"Remote","body":"Fetched","license":"CC-BY"}}', "application/json", url
+
 # The restricted Windows runner blocks the Proactor loop's socketpair accept.
 if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -43,12 +70,21 @@ def settings():
         connector_disabled=frozenset(),
         mock_platform_url="http://mock-platform:8080",
         webhook_secrets={},
+        certification_evidence_dir="artifacts/certification",
+        catalogue_import_max_bytes=2097152,
+        catalogue_import_max_rows=5000,
+        catalogue_reachability_enabled=False,
     )
 
 
 @pytest.fixture
 def app(settings):
-    return create_app(settings=settings, readiness_adapter=ReadyAdapter())
+    return create_app(
+        settings=settings,
+        readiness_adapter=ReadyAdapter(),
+        artifact_store=FakeArtifactStore(),
+        content_fetcher=FakeContentFetcher(),
+    )
 
 
 @pytest.fixture

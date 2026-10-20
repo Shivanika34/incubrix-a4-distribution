@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: incubrix-public-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerCommand: python -m app.render_demo
+    healthCheckPath: /health
+    envVars:
+      - key: SIMULATION_MODE
+        value: "true"
+      - key: DATABASE_URL
+        value: sqlite:////tmp/incubrix-demo.sqlite3
+      - key: DEMO_EPHEMERAL_ARTIFACTS
+        value: "true"
+      - key: DEMO_ARTIFACT_DIRECTORY
+        value: /tmp/incubrix-artifacts

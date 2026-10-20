@@ -18,6 +18,7 @@ class PublishingJobRequest(BaseModel):
     content_item: dict = Field(min_length=1)
     destination_ids: list[str] = Field(min_length=1)
     connections: dict[str, dict] = Field(default_factory=dict)
+    enable_tailoring: bool = Field(default=False)
 
 
 class CertificationRequest(BaseModel):
@@ -38,16 +39,25 @@ class JobResponse(BaseModel):
     updated_at: datetime
 
 
-def add_job_routes(application, callback_adapter, echo_sleep_seconds: float, connector_registry=None, disabled_connectors=frozenset()) -> JobService:
+def add_job_routes(application, callback_adapter, echo_sleep_seconds: float, connector_registry=None, disabled_connectors=frozenset(), *, simulation_mode: bool = True, evidence_dir: str = "artifacts/certification", catalogue_import_max_rows: int = 5000, catalogue_reachability_enabled: bool = False, artifact_store=None):
     """Attach job endpoints and return their shared in-process worker."""
-    jobs = JobService(application.state.session_factory, callback_adapter, echo_sleep_seconds, connector_registry, disabled_connectors)
+    jobs = JobService(
+        application.state.session_factory,
+        callback_adapter,
+        echo_sleep_seconds,
+        connector_registry,
+        disabled_connectors,
+        simulation_mode=simulation_mode,
+        evidence_dir=evidence_dir,
+        catalogue_import_max_rows=catalogue_import_max_rows,
+        catalogue_reachability_enabled=catalogue_reachability_enabled,
+        artifact_store=artifact_store,
+    )
     application.state.jobs = jobs
     router = APIRouter(prefix="/api/v1/jobs")
 
     @router.post("/echo", response_model=JobResponse, status_code=202)
-    def create_echo(body: EchoRequest, request: Request, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
-        if not idempotency_key:
-            raise AppError("IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key header is required.", False)
+    def create_echo(body: EchoRequest, request: Request, idempotency_key: str = Header(..., alias="Idempotency-Key")):
         job, _created = request.app.state.jobs.create_or_get(
             idempotency_key,
             body.model_dump(mode="json"),
@@ -65,10 +75,8 @@ def add_job_routes(application, callback_adapter, echo_sleep_seconds: float, con
     def create_publishing_job(
         body: PublishingJobRequest,
         request: Request,
-        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+        idempotency_key: str = Header(..., alias="Idempotency-Key"),
     ):
-        if not idempotency_key:
-            raise AppError("IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key header is required.", False)
         job, _created = request.app.state.jobs.create_publishing(idempotency_key, body.model_dump(mode="json"))
         return _to_response(job)
 
@@ -78,10 +86,8 @@ def add_job_routes(application, callback_adapter, echo_sleep_seconds: float, con
     def create_certification(
         body: CertificationRequest,
         request: Request,
-        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+        idempotency_key: str = Header(..., alias="Idempotency-Key"),
     ):
-        if not idempotency_key:
-            raise AppError("IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key header is required.", False)
         job, _created = request.app.state.jobs.create_certification(idempotency_key, body.model_dump(mode="json"))
         return _to_response(job)
 
