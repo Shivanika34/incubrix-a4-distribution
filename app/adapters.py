@@ -31,3 +31,14 @@ class ServiceReadiness:
             client.make_bucket(self.settings.minio_bucket)
 
 
+class DatabaseReadiness:
+    """Readiness for the single-process demo, which stores artifacts locally."""
+
+    def __init__(self, session_factory):
+        self.session_factory = session_factory
+
+    def check(self) -> None:
+        with self.session_factory() as session:
+            session.execute(text("SELECT 1"))
+
+

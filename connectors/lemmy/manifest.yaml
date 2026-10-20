@@ -2,6 +2,7 @@ key: lemmy
 version: 1.0.0
 tier: native
 auth: bot_token
+api_version: v3
 surfaces:
   - key: community_post
     content_types: [text, image, video_link]

@@ -2,6 +2,7 @@ import time
 from dataclasses import replace
 import json
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -23,6 +24,7 @@ def wait_for_job(client, job_id):
 def create_destination(client, connector_key="noop"):
     response = client.post(
         "/api/v1/destinations",
+        headers={"Idempotency-Key": "create-certification-destination"},
         json={
             "name": "Certification destination",
             "url": "https://destination.example.test/submit",
@@ -48,20 +50,44 @@ def test_certification_publishes_checks_status_deletes_and_persists_evidence(cli
     evidence = job["result"]["certification"]
 
     assert job["status"] == "succeeded"
-    assert evidence["status"] == "certified"
+    assert evidence["status"] == "simulated"
     assert evidence["status_result"]["status"] == "live"
     assert evidence["delete_result"]["deleted"] is True
     with app.state.session_factory() as session:
         run = session.scalar(select(CertificationRun).where(CertificationRun.id == evidence["certification_run_id"]))
         destination = session.get(Destination, destination_id)
-        assert run.status == "certified"
+        assert run.status == "simulated"
         assert run.completed_at is not None
-        assert destination.last_certified_at is not None
-        assert destination.level == "L3"
+        assert destination.last_certified_at is None
+        assert destination.level == "L0"
     artifact = Path("artifacts/certification/noop") / f"{evidence['certification_run_id']}.json"
     saved = json.loads(artifact.read_text(encoding="utf-8"))
-    assert saved["status"] == "certified"
+    assert saved["status"] == "simulated"
     assert saved["delete_result"]["deleted"] is True
+
+    # A complete local mock publish/status/delete cycle is simulation evidence
+    # only. It must not promote the destination or authorize automated dispatch.
+    connector = app.state.connector_registry.get("noop")
+    publish = MagicMock(side_effect=AssertionError("simulated certification must not authorize publishing"))
+    with app.state.session_factory.begin() as session:
+        destination = session.get(Destination, destination_id)
+        assert destination.level == "L0"
+        assert destination.last_certified_at is None
+    connector.publish = publish
+    submitted = client.post(
+        "/api/v1/publishing-orchestrations",
+        headers={"Idempotency-Key": "simulated-certification-still-blocked"},
+        json={
+            "content_item": {"title": "Still uncertified", "body": "Simulation does not promote this destination."},
+            "destination_ids": [destination_id],
+            "dispatch": True,
+        },
+    )
+    orchestration = wait_for_job(client, submitted.json()["job_id"])
+    outcome = orchestration["result"]["orchestration"]["destinations"][0]
+    assert outcome["error_code"] == "CONNECTOR_NOT_READY"
+    assert outcome["readiness"]["certification_level"] == "L0"
+    publish.assert_not_called()
 
 
 def test_certification_is_idempotent(client, app):
@@ -73,13 +99,14 @@ def test_certification_is_idempotent(client, app):
     assert first.json()["job_id"] == second.json()["job_id"]
     job = wait_for_job(client, first.json()["job_id"])
     connector = app.state.connector_registry.get("noop")
-    assert job["result"]["certification"]["status"] == "certified"
+    assert job["result"]["certification"]["status"] == "simulated"
     assert connector.posts == {}
 
 
 def test_assisted_certification_records_pack_without_fake_publish(client, app):
     response = client.post(
         "/api/v1/destinations",
+        headers={"Idempotency-Key": "create-assisted-certification"},
         json={
             "name": "Assisted certification",
             "url": "https://destination.example.test/submit",
@@ -117,3 +144,27 @@ def test_disabled_connector_fails_certification_without_publish(settings):
         job = wait_for_job(client, response.json()["job_id"])
         assert job["status"] == "failed"
         assert job["result"]["certification"]["error_code"] == "CONNECTOR_DISABLED"
+
+
+def test_publish_only_webhook_cannot_claim_certification(client):
+    destination_id = client.post(
+        "/api/v1/destinations",
+        headers={"Idempotency-Key": "create-webhook-certification"},
+        json={
+            "name": "Webhook certification",
+            "url": "https://partner.example/hook",
+            "platform_key": "webhook",
+            "surface": "post",
+            "connector_key": "webhook",
+        },
+    ).json()["id"]
+    response = client.post(
+        "/api/v1/certifications",
+        headers={"Idempotency-Key": "certification-webhook-publish-only"},
+        json={"destination_id": destination_id},
+    )
+    job = wait_for_job(client, response.json()["job_id"])
+    evidence = job["result"]["certification"]
+    assert job["status"] == "failed"
+    assert evidence["error_code"] == "CERTIFICATION_FAILED"
+    assert "status and cleanup" in evidence["reason"]

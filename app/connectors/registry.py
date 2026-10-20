@@ -21,6 +21,7 @@ MANIFEST_SCHEMA = {
         "key": {"type": "string", "pattern": "^[a-z0-9-]+$"}, "version": {"type": ["string", "number"]},
         "tier": {"enum": ["native", "protocol", "bridge", "feed", "assisted"]},
         "auth": {"enum": ["oauth2", "api_key", "bot_token", "none"]},
+        "api_version": {"type": "string"},
         "surfaces": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["key", "content_types", "spec"], "properties": {"key": {"type": "string"}, "content_types": {"type": "array"}, "spec": {"type": "object"}}, "additionalProperties": False}},
         "rate_limits": {"type": "object"}, "capabilities": {"type": "array"}, "error_map": {"type": "object"}, "instance_param": {"type": "string"},
     },
@@ -66,7 +67,15 @@ class ConnectorRegistry:
         if key == "discourse":
             return DiscourseConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
         if key == "lemmy":
-            return LemmyConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
+            return LemmyConnector(
+                manifest,
+                adapter,
+                simulation_mode=settings.simulation_mode,
+                mock_url=settings.mock_platform_url,
+                local_test_destination_id=getattr(settings, "lemmy_local_test_destination_id", ""),
+                local_test_base_url=getattr(settings, "lemmy_local_test_base_url", "http://lemmy:8536"),
+                local_test_community_id=getattr(settings, "lemmy_local_test_community_id", 2),
+            )
         if key == "ghost":
             return GhostConnector(manifest, adapter, simulation_mode=settings.simulation_mode, mock_url=settings.mock_platform_url)
         raise ValueError(f"No implementation exists for connector '{key}'.")

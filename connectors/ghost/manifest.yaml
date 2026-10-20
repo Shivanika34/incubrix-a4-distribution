@@ -2,6 +2,7 @@ key: ghost
 version: 1.0.0
 tier: native
 auth: api_key
+api_version: v6.0
 surfaces:
   - key: post
     content_types: [text, image, video_link]

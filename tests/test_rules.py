@@ -23,6 +23,7 @@ def test_table_driven_posting_rules():
 def test_rules_run_before_connector_publish_and_are_recorded(client, app):
     response = client.post(
         "/connector/v1/noop/publish",
+        headers={"Idempotency-Key": "rule-before-publish"},
         json={"rendition": {"is_promotional": True}, "destination": {"self_promo_allowed": False}},
     )
     assert response.status_code == 422
